@@ -94,6 +94,22 @@ class GlobalStoragesServiceTest extends StoragesServiceTest {
 					'priority' => 15,
 				],
 			],
+			// single user
+			[
+				[
+					'mountPoint' => 'mountpoint',
+					'backendIdentifier' => 'identifier:\Test\Files\External\Backend\DummyBackend',
+					'authMechanismIdentifier' => 'identifier:\Auth\Mechanism',
+					'backendOptions' => [
+						'option1' => 'value1',
+						'option2' => 'value2',
+						'password' => 'testPassword',
+					],
+					'applicableUsers' => ['foo'],
+					'applicableGroups' => [],
+					'priority' => 15,
+				],
+			],
 			// some groups
 			[
 				[
@@ -158,6 +174,110 @@ class GlobalStoragesServiceTest extends StoragesServiceTest {
 
 		$nextStorage = $this->service->addStorage($storage);
 		$this->assertEquals($baseId + 1, $nextStorage->getId());
+	}
+
+	public function providesDeleteAllForUser() {
+		return [
+			//False test
+			[
+				[
+				]
+			],
+			// all users
+			[
+				[
+					'mountPoint' => 'mountpoint',
+					'backendIdentifier' => 'identifier:\Test\Files\External\Backend\DummyBackend',
+					'authMechanismIdentifier' => 'identifier:\Auth\Mechanism',
+					'backendOptions' => [
+						'option1' => 'value1',
+						'option2' => 'value2',
+						'password' => 'testPassword',
+					],
+					'applicableUsers' => [],
+					'applicableGroups' => [],
+					'priority' => 15,
+				],
+			],
+			// multiple users
+			[
+				[
+					'mountPoint' => 'mountpoint',
+					'backendIdentifier' => 'identifier:\Test\Files\External\Backend\DummyBackend',
+					'authMechanismIdentifier' => 'identifier:\Auth\Mechanism',
+					'backendOptions' => [
+						'option1' => 'value1',
+						'option2' => 'value2',
+						'password' => 'testPassword',
+					],
+					'applicableUsers' => ['user1', 'user2'],
+					'applicableGroups' => [],
+					'priority' => 15,
+				],
+			],
+			// single user
+			[
+				[
+					'mountPoint' => 'mountpoint',
+					'backendIdentifier' => 'identifier:\Test\Files\External\Backend\DummyBackend',
+					'authMechanismIdentifier' => 'identifier:\Auth\Mechanism',
+					'backendOptions' => [
+						'option1' => 'value1',
+						'option2' => 'value2',
+						'password' => 'testPassword',
+					],
+					'applicableUsers' => ['foo'],
+					'applicableGroups' => [],
+					'priority' => 15,
+				],
+			],
+			// both users and groups
+			[
+				[
+					'mountPoint' => 'mountpoint',
+					'backendIdentifier' => 'identifier:\Test\Files\External\Backend\DummyBackend',
+					'authMechanismIdentifier' => 'identifier:\Auth\Mechanism',
+					'backendOptions' => [
+						'option1' => 'value1',
+						'option2' => 'value2',
+						'password' => 'testPassword',
+					],
+					'applicableUsers' => ['user1', 'user2'],
+					'applicableGroups' => ['group1', 'group2'],
+					'priority' => 15,
+				],
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider providesDeleteAllForUser
+	 */
+	public function testDeleteAllForUser($storageParams) {
+		$this->service = new GlobalStoragesService($this->backendService, $this->dbConfig, $this->mountCache);
+		if (\count($storageParams) === 0) {
+			$this->assertFalse($this->service->deleteAllForUser('foo'));
+		} elseif (\count($storageParams['applicableUsers']) >= 1) {
+			$storage = $this->makeStorageConfig($storageParams);
+			$this->service->addStorage($storage);
+			if (isset($storageParams['applicableUsers'])) {
+				$initialApplicableUsers = \count($storageParams['applicableUsers']);
+				$this->assertTrue($this->service->deleteAllForUser($storageParams['applicableUsers'][0]));
+				if ($initialApplicableUsers > 1) {
+					$finalApplicableUsers = $this->service->getStorage($storage->getId())->getApplicableUsers();
+					if (isset($storageParams['applicableGroups'])) {
+						$finalApplicableGroups = $this->service->getStorage($storage->getId())->getApplicableGroups();
+						$this->assertEquals(\count($storageParams['applicableGroups']), \count($finalApplicableGroups));
+					}
+					$this->assertEquals(1, $initialApplicableUsers - \count($finalApplicableUsers));
+					\array_shift($storageParams['applicableUsers']);
+					$this->assertEquals([], \array_diff($storageParams['applicableUsers'], $finalApplicableUsers));
+				} else {
+					$storages = \count($this->service->getAllStorages());
+					$this->assertEquals(0, $storages);
+				}
+			}
+		}
 	}
 
 	/**
