@@ -44,6 +44,7 @@ use bantu\IniGetWrapper\IniGetWrapper;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Db\Db;
 use OC\AppFramework\Utility\TimeFactory;
+use OC\Authentication\AccountModule\Manager as AccountModuleManager;
 use OC\Command\AsyncBus;
 use OC\Diagnostics\EventLogger;
 use OC\Diagnostics\QueryLogger;
@@ -377,6 +378,10 @@ class Server extends ServerContainer implements IServerContainer, IServiceLoader
 
 		$this->registerService('OC\Authentication\TwoFactorAuth\Manager', function (Server $c) {
 			return new \OC\Authentication\TwoFactorAuth\Manager($c->getAppManager(), $c->getSession(), $c->getConfig());
+		});
+
+		$this->registerService('OC\Authentication\AccountModule\Manager', function (Server $c) {
+			return new AccountModuleManager($c->getConfig(), $c->getLogger(), $c->getServiceLoader());
 		});
 
 		$this->registerService('NavigationManager', function (Server $c) {
@@ -1090,6 +1095,13 @@ class Server extends ServerContainer implements IServerContainer, IServiceLoader
 	 */
 	public function getTwoFactorAuthManager() {
 		return $this->query('OC\Authentication\TwoFactorAuth\Manager');
+	}
+
+	/**
+	 * @return \OC\Authentication\AccountModule\Manager
+	 */
+	public function getAccountModuleManager() {
+		return $this->query('OC\Authentication\AccountModule\Manager');
 	}
 
 	/**
