@@ -262,7 +262,10 @@ class AllConfig implements IConfig {
 	 * @param mixed $default the default value to be returned if the value isn't set
 	 * @return string
 	 */
-	public function getUserValue($userId, $appName, $key, $default = '') {
+	public function getUserValue($userId, $appName, $key, $default = '', $useCache = true) {
+		if ($useCache === false) {
+			unset($this->userCache[$userId]);
+		}
 		$data = $this->getUserValues($userId);
 		if (isset($data[$appName], $data[$appName][$key])) {
 			return $data[$appName][$key];

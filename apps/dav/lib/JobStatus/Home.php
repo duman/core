@@ -45,8 +45,8 @@ class Home extends Collection {
 		if ($data === null) {
 			throw new NotFound();
 		}
-		// TODO: switch to own implementation so that we can delete a job
-		return new SimpleFile($name, $data, 'application/json');
+
+		return new JobStatus($this->getName(), $name, $data);
 	}
 
 	public function getChildren() {

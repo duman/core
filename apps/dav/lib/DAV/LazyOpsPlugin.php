@@ -48,7 +48,7 @@ class LazyOpsPlugin extends ServerPlugin {
 	private $jobId;
 
 	public static function getQueueInfo(string $userId, string $jobId) {
-		return \OC::$server->getConfig()->getUserValue($userId, 'dav', "lazy-ops-job.$jobId", null);
+		return \OC::$server->getConfig()->getUserValue($userId, 'dav', "lazy-ops-job.$jobId", null, false);
 	}
 
 	/**
@@ -57,7 +57,6 @@ class LazyOpsPlugin extends ServerPlugin {
 	public function initialize(Server $server) {
 		$this->server = $server;
 		$server->on('method:MOVE', [$this, 'httpMove'], 90);
-//		$server->on('afterResponse', [$this, 'afterResponse']);
 	}
 
 	public function httpMove(RequestInterface $request, ResponseInterface $response) {
