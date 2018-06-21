@@ -30,6 +30,7 @@ use Sabre\DAV\Exception;
 use Sabre\DAV\IFile;
 use Sabre\DAV\Server;
 use Sabre\DAV\ServerPlugin;
+use Sabre\DAV\UUIDUtil;
 use Sabre\HTTP\RequestInterface;
 use Sabre\HTTP\Response;
 use Sabre\HTTP\ResponseInterface;
@@ -43,6 +44,12 @@ class LazyOpsPlugin extends ServerPlugin {
 
 	/** @var Server */
 	private $server;
+	/** @var string */
+	private $jobId;
+
+	public static function getQueueInfo(string $userId, string $jobId) {
+		return \OC::$server->getConfig()->getUserValue($userId, 'dav', "lazy-ops-job.$jobId", null);
+	}
 
 	/**
 	 * @param Server $server
@@ -57,8 +64,18 @@ class LazyOpsPlugin extends ServerPlugin {
 		if (!$request->getHeader('OC-LazyOps')) {
 			return true;
 		}
+
+		$this->jobId = UUIDUtil::getUUID();
+		$this->setJobStatus([
+			'status' => 'init'
+		]);
+		$userId = \OC::$server->getUserSession()->getUser()->getUID();
+		// TODO: url decode ?
+		$location = \OC::$server->getURLGenerator()->linkTo('', 'remote.php') . "/dav/{$userId}/queue/{$this->jobId}";
+
 		$response->setStatus(202);
 		$response->addHeader('Connection', 'close');
+		$response->addHeader('OC-Location', $location);
 
 		\register_shutdown_function(function () use ($request, $response) {
 			return $this->afterResponse($request, $response);
@@ -76,9 +93,35 @@ class LazyOpsPlugin extends ServerPlugin {
 		$request->removeHeader('OC-LazyOps');
 		$responseDummy = new Response();
 		try {
+			$this->setJobStatus([
+				'status' => 'started'
+			]);
 			$this->server->emit('method:MOVE', [$request, $responseDummy]);
+
+			$this->setJobStatus([
+				'status' => 'finished',
+				'fileId' => $response->getHeader('OC-FileId'),
+				'ETag' => $response->getHeader('ETag')
+			]);
 		} catch (\Exception $ex) {
 			\OC::$server->getLogger()->logException($ex);
+
+			$this->setJobStatus([
+				'status' => 'error',
+				'errorCode' => 500,
+				'errorMessage' => $ex->getMessage()
+			]);
+		} finally {
+			// TODO: fix shutdown function execution order
+			\OC::$server->getLockingProvider()->releaseAll();
 		}
+	}
+
+	private function setJobStatus(array $status) {
+		//
+		// TODO: store in a true database table - POC uses user config
+		//
+		$userId = \OC::$server->getUserSession()->getUser()->getUID();
+		\OC::$server->getConfig()->setUserValue($userId, 'dav', "lazy-ops-job.{$this->jobId}", \json_encode($status));
 	}
 }
