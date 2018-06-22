@@ -19,8 +19,7 @@
  *
  */
 
-namespace OCA\DAV\Queue;
-
+namespace OCA\DAV\JobStatus;
 
 use Hhxsv5\SSE\SSE;
 use Hhxsv5\SSE\Update;
@@ -45,7 +44,7 @@ class EventStreamPlugin extends ServerPlugin {
 	 * @param Server $server
 	 * @return void
 	 */
-	function initialize(Server $server) {
+	public function initialize(Server $server) {
 		$this->server = $server;
 		$server->on('method:GET', [$this, 'httpGet'], 90);
 	}

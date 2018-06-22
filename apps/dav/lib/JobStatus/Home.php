@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OCA\DAV\Queue;
+namespace OCA\DAV\JobStatus;
 
 use OCA\DAV\DAV\LazyOpsPlugin;
 use Sabre\DAV\Collection;
@@ -32,7 +32,7 @@ class Home extends Collection {
 	private $principalInfo;
 
 	/**
-	 * UploadHome constructor.
+	 * Home constructor.
 	 *
 	 * @param array $principalInfo
 	 */

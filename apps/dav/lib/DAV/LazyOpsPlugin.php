@@ -69,12 +69,11 @@ class LazyOpsPlugin extends ServerPlugin {
 			'status' => 'init'
 		]);
 		$userId = \OC::$server->getUserSession()->getUser()->getUID();
-		// TODO: url decode ?
-		$location = \OC::$server->getURLGenerator()->linkTo('', 'remote.php') . "/dav/{$userId}/queue/{$this->jobId}";
+		$location = \OC::$server->getURLGenerator()->linkTo('', 'remote.php') . "/dav/{$userId}/job-status/{$this->jobId}";
 
 		$response->setStatus(202);
 		$response->addHeader('Connection', 'close');
-		$response->addHeader('OC-Location', $location);
+		$response->addHeader('OC-JobStatus-Location', $location);
 
 		\register_shutdown_function(function () use ($request, $response) {
 			return $this->afterResponse($request, $response);

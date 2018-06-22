@@ -18,16 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OCA\DAV\Queue;
+namespace OCA\DAV\JobStatus;
 
 use OCA\DAV\DAV\LazyOpsPlugin;
-use Sabre\DAV\Collection;
-use Sabre\DAV\Exception\Forbidden;
-use Sabre\DAV\Exception\MethodNotAllowed;
-use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\File;
-use Sabre\DAV\SimpleFile;
-use Sabre\HTTP\URLUtil;
 
 class JobStatus extends File {
 
@@ -63,7 +57,7 @@ class JobStatus extends File {
 	}
 
 	public function getETag() {
-		return '"' . sha1($this->get()) . '"';
+		return '"' . \sha1($this->get()) . '"';
 	}
 
 	public function getSize() {

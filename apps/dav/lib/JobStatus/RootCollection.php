@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>
  *
  */
-namespace OCA\DAV\Queue;
+namespace OCA\DAV\JobStatus;
 
 use Sabre\DAVACL\AbstractPrincipalCollection;
 
@@ -35,6 +35,6 @@ class RootCollection extends AbstractPrincipalCollection {
 	 * @inheritdoc
 	 */
 	public function getName() {
-		return 'queue';
+		return 'job-status';
 	}
 }

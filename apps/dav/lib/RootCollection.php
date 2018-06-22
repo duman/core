@@ -91,7 +91,7 @@ class RootCollection extends SimpleCollection {
 		$avatarCollection = new Avatars\RootCollection($userPrincipalBackend, 'principals/users');
 		$avatarCollection->disableListing = $disableListing;
 
-		$queueCollection = new Queue\RootCollection($userPrincipalBackend, 'principals/users');
+		$queueCollection = new JobStatus\RootCollection($userPrincipalBackend, 'principals/users');
 		$queueCollection->disableListing = $disableListing;
 
 		$children = [
