@@ -21,6 +21,8 @@
 namespace OCA\DAV\JobStatus;
 
 use OCA\DAV\DAV\LazyOpsPlugin;
+use OCA\DAV\JobStatus\Entity\JobStatus as JobStatusEntity;
+use OCA\DAV\JobStatus\Entity\JobStatusMapper;
 use Sabre\DAV\File;
 
 class JobStatus extends File {
@@ -31,11 +33,18 @@ class JobStatus extends File {
 	private $userId;
 	/** @var string */
 	private $data;
+	/** @var JobStatusMapper */
+	private $mapper;
+	/** @var JobStatusEntity */
+	private $entity;
 
-	public function __construct($userId, $jobId, $data) {
+	public function __construct($userId, $jobId,
+								JobStatusMapper $mapper,
+								JobStatusEntity $entity) {
 		$this->userId = $userId;
 		$this->jobId = $jobId;
-		$this->data = $data;
+		$this->mapper = $mapper;
+		$this->entity = $entity;
 	}
 
 	/**
@@ -50,10 +59,11 @@ class JobStatus extends File {
 	}
 
 	public function get() {
-		if ($this->data !== null) {
-			return $this->data;
+		if ($this->entity === null) {
+			$this->entity = $this->mapper
+				->findByUserIdAndJobId($this->userId, $this->jobId);
 		}
-		return LazyOpsPlugin::getQueueInfo($this->userId, $this->jobId);
+		return $this->entity->getStatusInfo();
 	}
 
 	public function getETag() {
@@ -65,6 +75,6 @@ class JobStatus extends File {
 	}
 
 	public function refreshStatus() {
-		$this->data = null;
+		$this->entity = null;
 	}
 }

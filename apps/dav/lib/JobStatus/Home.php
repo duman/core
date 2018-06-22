@@ -21,6 +21,8 @@
 namespace OCA\DAV\JobStatus;
 
 use OCA\DAV\DAV\LazyOpsPlugin;
+use OCA\DAV\JobStatus\Entity\JobStatusMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
 use Sabre\DAV\Collection;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\MethodNotAllowed;
@@ -41,12 +43,15 @@ class Home extends Collection {
 	}
 
 	public function getChild($name) {
-		$data = LazyOpsPlugin::getQueueInfo($this->getName(), $name);
-		if ($data === null) {
+		try {
+			/** @var JobStatusMapper $mapper */
+			$mapper = \OC::$server->query(JobStatusMapper::class);
+			$entity = $mapper->findByUserIdAndJobId($this->getName(), $name);
+
+			return new JobStatus($this->getName(), $name, $mapper, $entity);
+		} catch (DoesNotExistException $ex) {
 			throw new NotFound();
 		}
-
-		return new JobStatus($this->getName(), $name, $data);
 	}
 
 	public function getChildren() {

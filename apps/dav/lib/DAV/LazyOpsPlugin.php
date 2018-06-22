@@ -24,6 +24,8 @@ namespace OCA\DAV\DAV;
 use OCA\DAV\Connector\Sabre\Exception\Forbidden;
 use OCA\DAV\Connector\Sabre\File;
 use OCA\DAV\Files\ICopySource;
+use OCA\DAV\JobStatus\Entity\JobStatus;
+use OCA\DAV\JobStatus\Entity\JobStatusMapper;
 use OCP\Files\ForbiddenException;
 use OCP\Lock\ILockingProvider;
 use Sabre\DAV\Exception;
@@ -46,10 +48,8 @@ class LazyOpsPlugin extends ServerPlugin {
 	private $server;
 	/** @var string */
 	private $jobId;
-
-	public static function getQueueInfo(string $userId, string $jobId) {
-		return \OC::$server->getConfig()->getUserValue($userId, 'dav', "lazy-ops-job.$jobId", null, false);
-	}
+	/** @var JobStatus */
+	private $entity;
 
 	/**
 	 * @param Server $server
@@ -116,10 +116,20 @@ class LazyOpsPlugin extends ServerPlugin {
 	}
 
 	private function setJobStatus(array $status) {
-		//
-		// TODO: store in a true database table - POC uses user config
-		//
-		$userId = \OC::$server->getUserSession()->getUser()->getUID();
-		\OC::$server->getConfig()->setUserValue($userId, 'dav', "lazy-ops-job.{$this->jobId}", \json_encode($status));
+
+		/** @var JobStatusMapper $mapper */
+		$mapper = \OC::$server->query(JobStatusMapper::class);
+		if ($this->entity === null) {
+			$userId = \OC::$server->getUserSession()->getUser()->getUID();
+
+			$this->entity = new JobStatus();
+			$this->entity->setStatusInfo(\json_encode($status));
+			$this->entity->setUserId($userId);
+			$this->entity->setUuid($this->jobId);
+			$mapper->insert($this->entity);
+		} else {
+			$this->entity->setStatusInfo(\json_encode($status));
+			$mapper->update($this->entity);
+		}
 	}
 }
